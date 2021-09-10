@@ -14,6 +14,10 @@ class ODataServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function boot(\Illuminate\Http\Request $request)
     {
+        $this->publishes([
+            __DIR__.'/../config/odata.php' => config_path('odata.php')
+        ], 'odata-config');
+
         $tenantToken = self::getTenantToken($request);
 
         $this->app->singleton(ODataClient::class, function () use ($tenantToken) {
@@ -21,7 +25,7 @@ class ODataServiceProvider extends \Illuminate\Support\ServiceProvider
 
             $tenant = (\Illuminate\Support\Facades\App::make(TenantServiceClient::class))->get($tenantToken);
 
-            return ODataClient::dsmFactoryFromTenantArray($tenant, config('services.business-central.verify_ssl'));
+            return ODataClient::dsmFactoryFromTenantArray($tenant, config('odata.verify_ssl'));
         });
     }
 

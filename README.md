@@ -28,9 +28,9 @@ Once this repository has been added, you can install this package by running the
 composer require saintsystems/odata-client:dev-jma
 ```
 
-#### Laravel Service Provider
+#### Laravel config publish
 ```console
-php artisan vendor:publish --tag=tag=tenant-config --ansi
+php artisan vendor:publish --tag=tag=odata-config --ansi
 ```
 
 #### Constructing client

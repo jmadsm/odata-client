@@ -24,8 +24,13 @@ Example ```composer.json```
 ```
 
 Once this repository has been added, you can install this package by running the following command:
-```sh
+```console
 composer require saintsystems/odata-client:dev-jma
+```
+
+#### Laravel Service Provider
+```console
+php artisan vendor:publish --tag=tag=tenant-config --ansi
 ```
 
 #### Constructing client

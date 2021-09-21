@@ -46,6 +46,27 @@ $client = ODataClient::dsmFactory(
 );
 ```
 
+#### Using client in laravel
+```php
+<?php
+use Illuminate\Support\Facades\App;
+use SaintSystems\OData\ODataClient;
+
+$bcClient = App::make(ODataClient::class);
+```
+
+#### Using client in laravel with specific tenant(By id)
+```php
+<?php
+
+use Illuminate\Support\Facades\App;
+use JmaDsm\TenantService\Client as TenantServiceClient;
+use SaintSystems\OData\ODataClient;
+
+$tenant = (App::make(TenantServiceClient::class))->getById($tenantId);
+$oDataClient = ODataClient::dsmFactoryFromTenantArray($tenant, config('odata.verify_ssl'));
+```
+
 #### Getting data
 ```php
 <?php
@@ -54,14 +75,11 @@ $result = $client->from('contacts')->where('E_Mail', 'contact email')->get();
 ```
 
 #### Updating data
-First you must obtain an etag from the row you want to update, then after that you can update the row like so
 ```php
 ...
-$contact = $client->from("contacts(Field='123456789')")->first();
-
 $client->patch("contacts(Field='123456789')", [
 	"Other_Field" => "test"
-], $contact['@odata.etag']);
+], "*");
 ```
 
 #### Creating data

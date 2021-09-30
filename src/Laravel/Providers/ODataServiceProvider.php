@@ -21,7 +21,11 @@ class ODataServiceProvider extends \Illuminate\Support\ServiceProvider
         $tenantToken = self::getTenantToken($request);
 
         $this->app->singleton(ODataClient::class, function () use ($tenantToken) {
-            if (is_null($tenantToken)) throw new \Exception("no_tenant_token", 1);
+            if (is_null($tenantToken)) {
+                if (config('odata.exeption_without_tenant_token')) throw new \Exception("no_tenant_token", 1);
+
+                return null;
+            }
 
             $tenant = (\Illuminate\Support\Facades\App::make(TenantServiceClient::class))->get($tenantToken);
 

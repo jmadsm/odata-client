@@ -30,8 +30,8 @@ composer require saintsystems/odata-client:dev-jma
 
 #### Laravel config publish
 ```console
-php artisan vendor:publish --tag=tag=tenant-config --ansi
-php artisan vendor:publish --tag=tag=odata-config --ansi
+php artisan vendor:publish --tag=tenant-config --ansi
+php artisan vendor:publish --tag=odata-config --ansi
 ```
 
 #### Constructing client

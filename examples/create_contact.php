@@ -19,7 +19,7 @@ var_dump(
         "E_Mail" => "test@email.com",
         "Image" => "00000000-0000-0000-0000-000000000000", // maybe
         "Type" => "Person",
-        "Company_No" => "E000000",
+        // "Company_No" => "E000001", // Only needed when creating a company
         "Company_Name" => "Hello",
         "First_Name" => "Test",
         "Middle_Name" => "",

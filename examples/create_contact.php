@@ -8,7 +8,7 @@ $client = ODataClient::dsmFactoryFromTenantArray($config['tenant'], false);
 
 var_dump(
     $client->post("contacts", [
-        "Name" => "Test Testersen",
+        // "Name" => "Test Testersen", // Use "First_name", "Middle_Name" and "Surname"
         "Address" => "Testvej 5",
         "Address_2" => "",
         "City" => "Randers",

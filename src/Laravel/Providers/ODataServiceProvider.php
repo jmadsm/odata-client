@@ -2,6 +2,8 @@
 
 namespace SaintSystems\OData\Laravel\Providers;
 
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
 use JmaDsm\TenantService\Client as TenantServiceClient;
 use SaintSystems\OData\ODataClient;
 
@@ -15,21 +17,29 @@ class ODataServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot(\Illuminate\Http\Request $request)
     {
         $this->publishes([
-            __DIR__.'/../config/odata.php' => config_path('odata.php')
+            __DIR__ . '/../config/odata.php' => config_path('odata.php')
         ], 'odata-config');
 
         $tenantToken = self::getTenantToken($request);
 
         $this->app->singleton(ODataClient::class, function () use ($tenantToken) {
             if (is_null($tenantToken)) {
-                if (config('odata.exeption_without_tenant_token')) throw new \Exception("no_tenant_token", 1);
+                if (Config::get('odata.exeption_without_tenant_token')) {
+                    throw new \Exception('no_tenant_token', 1);
+                }
 
                 return null;
             }
 
-            $tenant = (\Illuminate\Support\Facades\App::make(TenantServiceClient::class))->get($tenantToken);
+            $tenantJson = Cache::remember(
+                'tenant-token-verification_' . $tenantToken,
+                Config::get('odata.tenant_token_cache_ttl', 10),
+                function () use ($tenantToken) {
+                    return json_encode((\Illuminate\Support\Facades\App::make(TenantServiceClient::class))->get($tenantToken));
+                }
+            );
 
-            return ODataClient::dsmFactoryFromTenantArray($tenant, config('odata.verify_ssl'));
+            return ODataClient::dsmFactoryFromTenantArray(json_decode($tenantJson, true), Config::get('odata.verify_ssl'));
         });
     }
 

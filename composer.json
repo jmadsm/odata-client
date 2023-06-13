@@ -20,7 +20,6 @@
         "php": "^7.3 || ^8.0",
         "guzzlehttp/guzzle": "^7.0",
         "nesbot/carbon": "^2.0",
-        "illuminate/support": "^5.8 || ^6.0 || ^7.0 || ^8.0",
         "jmadsm/tenant-service-client": "^1.4.1"
     },
     "require-dev": {

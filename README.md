@@ -64,3 +64,8 @@ This has not been used yet
 
 #### Deleting data
 This has not been used yet
+
+#### Running Tests
+Go to https://jmadsm.atlassian.net/wiki/spaces/DWI/pages/1889763329/ODataClient+Extension get the information needed to run tests succesfully.
+Copy tests/config.php.example and insert the needed test data.
+Run tests from bash with : ./vendor/bin/phpunit --verbose tests

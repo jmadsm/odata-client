@@ -1,0 +1,19 @@
+<?php
+
+function getConfig($service)
+{
+    $gatewayConfig['services'] = [
+        'tenant' => [ // KHO data is needed for the test to run successfully! See here for details: https://jmadsm.atlassian.net/wiki/spaces/DWI/pages/1889763329/ODataClient+Extension#To-run-tests-these-configurations-are-needed
+            'tenant_endpoint' => '',
+            'tenant_token'    => '',
+            'tenant_api_token' => '',
+            'company_id'     => '',
+            'tenant_name'    => '',
+            'tenant_url'     => '',
+            'tenant_username' => '',
+            'tenant_password' => ''
+        ]
+    ];
+
+    return $gatewayConfig['services'][$service];
+}

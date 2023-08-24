@@ -363,11 +363,11 @@ class ODataV4Client implements IODataClient
 
         return new static(
             rtrim($tenantBaseUrl, '/') . "/ODataV4",
-            function ($request) use ($tenantUsername, $tenantPassword, $tenantName) {
+            function ($request) use ($tenantUsername, $tenantPassword, $tenantName, $tenantCompanyId) {
                 $request->headers = self::formatHeaders($request->headers);
                 $request->headers['Authorization'] = 'Basic ' . base64_encode("{$tenantUsername}:{$tenantPassword}");
 
-                $tenantQueryString = ((strpos($request->requestUri, '?') === false) ? '?': '&') . "tenant={$tenantName}";
+                $tenantQueryString = ((strpos($request->requestUri, '?') === false) ? '?': '&') . "tenant={$tenantName}&company={$tenantCompanyId}";
                 $request->requestUri .= $tenantQueryString;
             },
             $provider

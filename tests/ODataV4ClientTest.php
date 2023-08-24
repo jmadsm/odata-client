@@ -4,13 +4,15 @@ namespace Tests;
 use PHPUnit\Framework\TestCase;
 use SaintSystems\OData\ODataV4Client;
 
-
+require_once (__DIR__ . '/../vendor/autoload.php');
+require_once (__DIR__ . '/config.php');
 /**
  * Summary of ODataV4ClientTest
  */
 class ODataV4ClientTest extends TestCase
-{
-    //use ProvideODataV4Client, CreatesApplication;
+{    
+    private $config;
+    private $oDataV4Client;
     /**
      * Summary of setUp
      * @return void
@@ -18,22 +20,24 @@ class ODataV4ClientTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+        $this->config = getConfig('tenant');
+        $this->oDataV4Client = ODataV4Client::dsmFactory($this->config["company_id"],$this->config["tenant_name"],$this->config["tenant_url"],$this->config["tenant_username"],$this->config["tenant_password"]);
     }
 
     public function testGetDebitorNoFromP22_Debitor(){
-        $oDataClient = ODataV4Client::dsmFactory('805c29d0-2d38-4699-9011-f70d2ef11240','kho','https://kho.jmatest.dk:8172/bcdk2_webtest-ws/','DSMWS','iav0UhMqwlDgZNCwVFVWd87aO5a+VWYaMqnjn5FCDyA=');
         $khoDebitorNo = '76721300';
 
         try{
-            $query = $oDataClient
+            $query = $this->oDataV4Client
             ->from('P22_Debitor')
             ->where("No eq '{$khoDebitorNo}'");
             $debitor = $query->get();
+
+            $this->assertEquals('76721300', $debitor->first()->No, 'DebitorNo was not found');
         }
         catch(\Exception $e){
             $this->fail($e->getMessage());
         }
-        $this->assertEquals('76721300', $debitor->first()->No, 'DebitorNo was not found');
     }
     
     

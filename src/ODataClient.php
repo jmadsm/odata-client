@@ -452,12 +452,14 @@ class ODataClient implements IODataClient
      * @param boolean $verifySsl            Wether or not to verify ssl certificates
      * @return ODataClient
      */
-    public static function dsmFactory(string $tenantCompanyId, string $tenantName, string $tenantBaseUrl, string $tenantUsername, string $tenantPassword, string $tenantApiVersion = 'beta', bool $verifySsl = true)
+    public static function dsmFactory(string $tenantCompanyId, string $tenantName, string $tenantBaseUrl, string $tenantUsername, string $tenantPassword, string $tenantApiVersion = 'beta', bool $verifySsl = true, bool $enableMetadata = false)
     {
         $provider = new GuzzleHttpProvider();
         if (!$verifySsl) {
             $provider->setExtraOptions(['verify' => false]);
         }
+
+        if (!$enableMetadata) $provider->setAdditionalHeader('Accept', 'application/json;odata.metadata=none');
 
         return new static(
             rtrim($tenantBaseUrl, '/') . "/api/{$tenantApiVersion}/companies({$tenantCompanyId})",
@@ -472,9 +474,9 @@ class ODataClient implements IODataClient
         );
     }
 
-    public static function dsmFactoryFromTenantArray(array $tenant, bool $verifySsl = true)
+    public static function dsmFactoryFromTenantArray(array $tenant, bool $verifySsl = true, bool $enableMetadata = false)
     {
-        return static::dsmFactory($tenant['api_company_id'], $tenant['api_tenant'], $tenant['api_base_url'], $tenant['api_user'], $tenant['api_password'], $tenant['api_rest_version'], $verifySsl);
+        return static::dsmFactory($tenant['api_company_id'], $tenant['api_tenant'], $tenant['api_base_url'], $tenant['api_user'], $tenant['api_password'], $tenant['api_rest_version'], $verifySsl, $enableMetadata);
     }
 
     /**

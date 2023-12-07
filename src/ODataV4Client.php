@@ -53,6 +53,20 @@ class ODataV4Client implements IODataClient
     private $entityReturnType;
 
     /**
+     * The page size
+     *
+     * @var int
+     */
+    private $pageSize;
+
+    /**
+     * The entityKey to be found
+     *
+     * @var mixed
+     */
+    private $entityKey;
+
+    /**
      * Constructs a new ODataV4Client.
      * @param string                  $baseUrl                The base service URL.
      * @param IAuthenticationProvider $authenticationProvider The IAuthenticationProvider for authenticating request messages.
@@ -472,11 +486,12 @@ class ODataV4Client implements IODataClient
      */
     protected static function formatHeaders(array $headers): array
     {
-        foreach ($headers[0] as $key => $value) {
-            $headers[$key] = $value;
-        }
-        unset($headers[0]);
+        $newHeaders = [];
 
-        return $headers;
+        foreach ($headers as $key => $value) {
+            $newHeaders[$key] = $value;
+        }
+
+        return $newHeaders;
     }
 }

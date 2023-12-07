@@ -10,7 +10,7 @@ require_once (__DIR__ . '/config.php');
  * Summary of ODataV4ClientTest
  */
 class ODataV4ClientTest extends TestCase
-{    
+{
     private $config;
     private $oDataV4Client;
     /**
@@ -33,12 +33,13 @@ class ODataV4ClientTest extends TestCase
             ->where("No eq '{$khoDebitorNo}'");
             $debitor = $query->get();
 
-            $this->assertEquals('76721300', $debitor->first()->No, 'DebitorNo was not found');
+//            $this->assertEquals('76721300', $debitor->first()[0]->No, 'DebitorNo was not found'); // this works... witch is worring
+            $this->assertEquals('76721300', $debitor->first()->No, 'DebitorNo was not found'); // this fails after merge with saintsystems/master
         }
         catch(\Exception $e){
             $this->fail($e->getMessage());
         }
     }
-    
-    
+
+
 }

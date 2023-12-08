@@ -487,11 +487,12 @@ class ODataClient implements IODataClient
      */
     protected static function formatHeaders(array $headers): array
     {
-        foreach ($headers[0] as $key => $value) {
-            $headers[$key] = $value;
-        }
-        unset($headers[0]);
+        $newHeaders = [];
 
-        return $headers;
+        foreach ($headers as $key => $value) {
+            $newHeaders[$key] = $value;
+        }
+
+        return $newHeaders;
     }
 }

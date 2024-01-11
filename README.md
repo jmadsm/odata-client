@@ -24,14 +24,8 @@ Example ```composer.json```
 ```
 
 Once this repository has been added, you can install this package by running the following command:
-```console
-composer require saintsystems/odata-client:dev-jma
-```
-
-#### Laravel config publish
-```console
-php artisan vendor:publish --tag=tenant-config --ansi
-php artisan vendor:publish --tag=odata-config --ansi
+```sh
+composer require saintsystems/odata-client:dev-<version>
 ```
 
 #### Constructing client
@@ -47,27 +41,6 @@ $client = ODataClient::dsmFactory(
 );
 ```
 
-#### Using client in laravel
-```php
-<?php
-use Illuminate\Support\Facades\App;
-use SaintSystems\OData\ODataClient;
-
-$bcClient = App::make(ODataClient::class);
-```
-
-#### Using client in laravel with specific tenant(By id)
-```php
-<?php
-
-use Illuminate\Support\Facades\App;
-use JmaDsm\TenantService\Client as TenantServiceClient;
-use SaintSystems\OData\ODataClient;
-
-$tenant = (App::make(TenantServiceClient::class))->getById($tenantId);
-$oDataClient = ODataClient::dsmFactoryFromTenantArray($tenant, config('odata.verify_ssl'));
-```
-
 #### Getting data
 ```php
 <?php
@@ -76,11 +49,14 @@ $result = $client->from('contacts')->where('E_Mail', 'contact email')->get();
 ```
 
 #### Updating data
+First you must obtain an etag from the row you want to update, then after that you can update the row like so
 ```php
 ...
+$contact = $client->from("contacts(Field='123456789')")->first();
+
 $client->patch("contacts(Field='123456789')", [
 	"Other_Field" => "test"
-], "*");
+], $contact['@odata.etag']);
 ```
 
 #### Creating data
@@ -88,3 +64,8 @@ This has not been used yet
 
 #### Deleting data
 This has not been used yet
+
+#### Running Tests
+Go to https://jmadsm.atlassian.net/wiki/spaces/DWI/pages/1889763329/ODataClient+Extension get the information needed to run tests succesfully.
+Copy tests/config.php.example and insert the needed test data.
+Run tests from bash with : ./vendor/bin/phpunit --verbose tests

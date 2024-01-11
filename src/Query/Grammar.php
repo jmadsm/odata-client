@@ -50,6 +50,7 @@ class Grammar implements IGrammar
         //'search',
         'orders',
         'skip',
+        'skiptoken',
         'take',
         'totalCount',
     ];
@@ -177,6 +178,7 @@ class Grammar implements IGrammar
                 || isset($query->expands)
                 || isset($query->take)
                 || isset($query->skip)
+                || isset($query->skiptoken)
             )) {
             return $queryString;
         }
@@ -286,6 +288,11 @@ class Grammar implements IGrammar
         })->all();
     }
 
+    protected function whereRaw(Builder $query, $where)
+    {
+        return $where['rawString'];
+    }
+
     /**
      * Format the where clause statements into one string.
      *
@@ -314,6 +321,18 @@ class Grammar implements IGrammar
     {
         $value = $this->prepareValue($where['value']);
         return $where['column'].' '.$this->getOperatorMapping($where['operator']).' '.$value;
+    }
+
+    /**
+     * Compile a where clause comparing two columns.
+     *
+     * @param  Builder $query
+     * @param  array   $where
+     * @return string
+     */
+    protected function whereColumn(Builder $query, $where)
+    {
+        return $where['first'].' '.$this->getOperatorMapping($where['operator']).' '.$where['second'];
     }
 
     /**
@@ -401,6 +420,19 @@ class Grammar implements IGrammar
     protected function compileSkip(Builder $query, $skip)
     {
         return $this->appendQueryParam('$skip=') . (int) $skip;
+    }
+
+    /**
+     * Compile the "$skiptoken" portions of the query.
+     *
+     * @param Builder $query
+     * @param int     $skip
+     *
+     * @return string
+     */
+    protected function compileSkipToken(Builder $query, $skiptoken)
+    {
+        return $this->appendQueryParam('$skiptoken=') . (int) $skiptoken;
     }
 
     /**
@@ -585,6 +617,30 @@ class Grammar implements IGrammar
     protected function whereNotNull(Builder $query, $where)
     {
         return $where['column'] . ' ne null';
+    }
+
+    /**
+     * Compile a "where in" clause.
+     *
+     * @param  Builder  $query
+     * @param  array  $where
+     * @return string
+     */
+    protected function whereIn(Builder $query, $where)
+    {
+        return $where['column'] . ' in (\'' . implode('\',\'', $where['list'])  . '\')';
+    }
+
+    /**
+     * Compile a "where not in" clause.
+     *
+     * @param  Builder  $query
+     * @param  array  $where
+     * @return string
+     */
+    protected function whereNotIn(Builder $query, $where)
+    {
+        return 'not(' . $where['column'] . ' in (\'' . implode('\',\'', $where['list'])  . '\'))';
     }
 
     /**

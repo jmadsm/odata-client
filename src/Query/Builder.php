@@ -5,6 +5,7 @@ namespace SaintSystems\OData\Query;
 use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use SaintSystems\OData\Constants;
 use SaintSystems\OData\Exception\ODataQueryException;
 use SaintSystems\OData\IODataClient;
@@ -115,11 +116,25 @@ class Builder
     public $take;
 
     /**
+     * The desired page size.
+     *
+     * @var int
+     */
+    public $pageSize;
+
+    /**
      * The number of records to skip.
      *
      * @var int
      */
     public $skip;
+
+    /**
+     * The skiptoken.
+     *
+     * @var int
+     */
+    public $skiptoken;
 
     /**
      * All of the available clause operators.
@@ -226,7 +241,7 @@ class Builder
     public function whereKey($id)
     {
         $this->entityKey = $id;
-
+        $this->client->setEntityKey($this->entityKey);
         return $this;
     }
 
@@ -441,7 +456,6 @@ class Builder
         if($this->isOperatorAFunction($operator)){
             $type = 'Function';
         }
-        
 
         $this->wheres[] = compact(
             'type', 'column', 'operator', 'value', 'boolean'
@@ -549,6 +563,82 @@ class Builder
     public function orWhere($column, $operator = null, $value = null)
     {
         return $this->where($column, $operator, $value, 'or');
+    }
+
+    public function whereRaw($rawString, $boolean = 'and')
+    {
+        // We will add this where clause into this array of clauses that we
+        // are building for the query. All of them will be compiled via a grammar
+        // once the query is about to be executed and run against the database.
+        $type = 'Raw';
+
+        $this->wheres[] = compact(
+            'type', 'rawString', 'boolean'
+        );
+
+        return $this;
+    }
+
+    public function orWhereRaw($rawString)
+    {
+        return $this->whereRaw($rawString, 'or');
+    }
+
+    /**
+     * Add a "where" clause comparing two columns to the query.
+     *
+     * @param  string|array $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @param  string|null  $boolean
+     * @return $this
+     */
+    public function whereColumn($first, $operator = null, $second = null, $boolean = 'and')
+    {
+        // If the column is an array, we will assume it is an array of key-value pairs
+        // and can add them each as a where clause. We will maintain the boolean we
+        // received when the method was called and pass it into the nested where.
+        if (is_array($first)) {
+            return $this->addArrayOfWheres($first, $boolean, 'whereColumn');
+        }
+
+        // Here we will make some assumptions about the operator. If only 2 values are
+        // passed to the method, we will assume that the operator is an equals sign
+        // and keep going. Otherwise, we'll require the operator to be passed in.
+        list($second, $operator) = $this->prepareValueAndOperator(
+            $second, $operator, func_num_args() == 2
+        );
+
+        // If the given operator is not found in the list of valid operators we will
+        // assume that the developer is just short-cutting the '=' operators and
+        // we will set the operators to '=' and set the values appropriately.
+        if ($this->invalidOperator($operator)) {
+            [$second, $operator] = [$operator, '='];
+        }
+
+        // Finally, we will add this where clause into this array of clauses that we
+        // are building for the query. All of them will be compiled via a grammar
+        // once the query is about to be executed and run against the database.
+        $type = 'Column';
+
+        $this->wheres[] = compact(
+            'type', 'first', 'operator', 'second', 'boolean'
+        );
+
+        return $this;
+    }
+
+    /**
+     * Add an "or where" clause comparing two columns to the query.
+     *
+     * @param  string|array $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @return $this
+     */
+    public function orWhereColumn($first, $operator = null, $second = null)
+    {
+        return $this->whereColumn($first, $operator, $second, 'or');
     }
 
     /**
@@ -676,6 +766,66 @@ class Builder
         return $this->whereNotNull($column, 'or');
     }
 
+
+
+
+    /**
+     * Add a "where in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array   $list
+     * @param  string  $boolean
+     * @param  bool    $not
+     * @return $this
+     */
+    public function whereIn($column, $list, $boolean = 'and', $not = false)
+    {
+        $type = $not ? 'NotIn' : 'In';
+
+        $this->wheres[] = compact('type', 'column', 'list', 'boolean');
+
+        return $this;
+    }
+
+    /**
+     * Add an "or where in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array   $list
+     * @return Builder|static
+     */
+    public function orWhereIn($column, $list)
+    {
+        return $this->whereIn($column, $list, 'or');
+    }
+
+    /**
+     * Add a "where not in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array   $list
+     * @param  string  $boolean
+     * @return Builder|static
+     */
+    public function whereNotIn($column, $list, $boolean = 'and')
+    {
+        return $this->whereIn($column, $list, $boolean, true);
+    }
+
+    /**
+     * Add an "or where not in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array   $list
+     * @return Builder|static
+     */
+    public function orWhereNotIn($column, $list)
+    {
+        return $this->whereNotIn($column, $list, 'or');
+    }
+
+
+
     /**
      * Get the HTTP Request representation of the query.
      *
@@ -687,10 +837,10 @@ class Builder
     }
 
     /**
-     * Execute a query for a single record by ID.
+     * Execute a query for a single record by ID. Single and multi-part IDs are supported.
      *
-     * @param int   $id
-     * @param array $properties
+     * @param int|string|array      $id the value of the ID or an associative array in case of multi-part IDs
+     * @param array                 $properties
      *
      * @return \stdClass|array|null
      *
@@ -745,6 +895,19 @@ class Builder
     }
 
     /**
+     * Set the "$skiptoken" value of the query.
+     *
+     * @param int $value
+     *
+     * @return Builder|static
+     */
+    public function skipToken($value)
+    {
+        $this->skiptoken = $value;
+        return $this;
+    }
+
+    /**
      * Set the "$top" value of the query.
      *
      * @param int $value
@@ -754,6 +917,20 @@ class Builder
     public function take($value)
     {
         $this->take = $value;
+        return $this;
+    }
+
+    /**
+     * Set the desired pagesize of the query;
+     *
+     * @param int $value
+     *
+     * @return Builder|static
+     */
+    public function pageSize($value)
+    {
+        $this->pageSize = $value;
+        $this->client->setPageSize($this->pageSize);
         return $this;
     }
 
@@ -890,6 +1067,20 @@ class Builder
         return $this->client->get(
             $this->grammar->compileSelect($this), $this->getBindings()
         );
+    }
+
+    /**
+     * Get a lazy collection for the given request.
+     *
+     * @return \Illuminate\Support\LazyCollection
+     */
+    public function cursor()
+    {
+        return new LazyCollection(function() {
+            yield from $this->client->cursor(
+                $this->grammar->compileSelect($this), $this->getBindings()
+            );
+        });
     }
 
     /**

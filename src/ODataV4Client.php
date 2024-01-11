@@ -3,15 +3,15 @@
 namespace SaintSystems\OData;
 
 use Closure;
+use Illuminate\Support\LazyCollection;
 use SaintSystems\OData\Exception\ODataException;
 use SaintSystems\OData\Query\Builder;
 use SaintSystems\OData\Query\Grammar;
 use SaintSystems\OData\Query\IGrammar;
 use SaintSystems\OData\Query\IProcessor;
 use SaintSystems\OData\Query\Processor;
-use Illuminate\Support\LazyCollection;
 
-class ODataClient implements IODataClient
+class ODataV4Client implements IODataClient
 {
     /**
      * The base service URL. For example, "https://services.odata.org/V4/TripPinService/"
@@ -67,7 +67,7 @@ class ODataClient implements IODataClient
     private $entityKey;
 
     /**
-     * Constructs a new ODataClient.
+     * Constructs a new ODataV4Client.
      * @param string                  $baseUrl                The base service URL.
      * @param IAuthenticationProvider $authenticationProvider The IAuthenticationProvider for authenticating request messages.
      * @param IHttpProvider|null      $httpProvider           The IHttpProvider for sending requests.
@@ -223,8 +223,7 @@ class ODataClient implements IODataClient
      */
     public function get($requestUri, $bindings = [])
     {
-        list($response, $nextPage) = $this->getNextPage($requestUri, $bindings);
-        return $response;
+        return $this->request(HttpMethod::GET, $requestUri);
     }
 
     /**
@@ -266,6 +265,8 @@ class ODataClient implements IODataClient
             }
         });
     }
+
+
 
     /**
      * Run a POST request against the service.
@@ -441,7 +442,7 @@ class ODataClient implements IODataClient
     }
 
     /**
-     * Construct ODataClient for DSM
+     * Construct ODataV4Client for DSM
      *
      * @param string $tenantCompanyId       Tenant->api_company_id
      * @param string $tenantName            Tenant->api_tenant
@@ -450,33 +451,31 @@ class ODataClient implements IODataClient
      * @param string $tenantPassword        Tenant->api_password
      * @param string $tenantApiVersion      Tenant->api_rest_version
      * @param boolean $verifySsl            Wether or not to verify ssl certificates
-     * @return ODataClient
+     * @return ODataV4Client
      */
-    public static function dsmFactory(string $tenantCompanyId, string $tenantName, string $tenantBaseUrl, string $tenantUsername, string $tenantPassword, string $tenantApiVersion = 'beta', bool $verifySsl = true, bool $enableMetadata = false)
+    public static function dsmFactory(string $tenantCompanyId, string $tenantName, string $tenantBaseUrl, string $tenantUsername, string $tenantPassword, string $tenantApiVersion = 'beta', bool $verifySsl = true)
     {
         $provider = new GuzzleHttpProvider();
         if (!$verifySsl) {
             $provider->setExtraOptions(['verify' => false]);
         }
 
-        if (!$enableMetadata) $provider->setAdditionalHeader('Accept', 'application/json;odata.metadata=none');
-
         return new static(
-            rtrim($tenantBaseUrl, '/') . "/api/{$tenantApiVersion}/companies({$tenantCompanyId})",
-            function ($request) use ($tenantUsername, $tenantPassword, $tenantName) {
+            rtrim($tenantBaseUrl, '/') . "/ODataV4",
+            function ($request) use ($tenantUsername, $tenantPassword, $tenantName, $tenantCompanyId) {
                 $request->headers = self::formatHeaders($request->headers);
                 $request->headers['Authorization'] = 'Basic ' . base64_encode("{$tenantUsername}:{$tenantPassword}");
 
-                $tenantQueryString = ((strpos($request->requestUri, '?') === false) ? '?': '&') . "tenant={$tenantName}";
+                $tenantQueryString = ((strpos($request->requestUri, '?') === false) ? '?': '&') . "tenant={$tenantName}&company={$tenantCompanyId}";
                 $request->requestUri .= $tenantQueryString;
             },
             $provider
         );
     }
 
-    public static function dsmFactoryFromTenantArray(array $tenant, bool $verifySsl = true, bool $enableMetadata = false)
+    public static function dsmFactoryFromTenantArray(array $tenant, bool $verifySsl = true)
     {
-        return static::dsmFactory($tenant['api_company_id'], $tenant['api_tenant'], $tenant['api_base_url'], $tenant['api_user'], $tenant['api_password'], $tenant['api_rest_version'], $verifySsl, $enableMetadata);
+        return static::dsmFactory($tenant['api_company_id'], $tenant['api_tenant'], $tenant['api_base_url'], $tenant['api_user'], $tenant['api_password'], $tenant['api_rest_version'], $verifySsl);
     }
 
     /**

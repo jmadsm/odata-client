@@ -1,0 +1,24 @@
+<?php
+use SaintSystems\OData\ODataClient;
+
+require_once("_config.php");
+
+$client = ODataClient::dsmFactoryFromTenantArray($config['tenant'], false, false);
+
+/*
+var_dump(
+    json_encode($client->from('contacts')->where('E_Mail', 'jhj@jma.dk')->get())
+);
+var_dump(
+    json_encode($client->from('contacts')->where('E_Mail', 'rrk@jma.dk')->get())
+);
+
+var_dump(
+    json_encode($client->from('contacts?$top=0&$count=true')->get())
+);
+*/
+var_dump(
+    json_encode($client->from('contacts')->where('E_Mail', 'rrk@jma.dk')->get()->count())
+);
+
+

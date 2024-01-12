@@ -3,6 +3,7 @@
 namespace SaintSystems\OData;
 
 use Closure;
+use Illuminate\Support\LazyCollection;
 use SaintSystems\OData\Exception\ODataException;
 use SaintSystems\OData\Query\Builder;
 use SaintSystems\OData\Query\Grammar;
@@ -50,6 +51,20 @@ class ODataV4Client implements IODataClient
      * @var string
      */
     private $entityReturnType;
+
+    /**
+     * The page size
+     *
+     * @var int
+     */
+    private $pageSize;
+
+    /**
+     * The entityKey to be found
+     *
+     * @var mixed
+     */
+    private $entityKey;
 
     /**
      * Constructs a new ODataV4Client.
@@ -212,6 +227,48 @@ class ODataV4Client implements IODataClient
     }
 
     /**
+     * Run a GET HTTP request against the service.
+     *
+     * @param string $requestUri
+     * @param array  $bindings
+     * @param array  $skipToken
+     *
+     * @return IODataRequest
+     */
+    public function getNextPage($requestUri, $bindings = [])
+    {
+        return $this->request(HttpMethod::GET, $requestUri, $bindings);
+    }
+
+    /**
+     * Run a GET HTTP request against the service and return a generator.
+     *
+     * @param string $requestUri
+     * @param array  $bindings
+     *
+     * @return \Illuminate\Support\LazyCollection
+     */
+    public function cursor($requestUri, $bindings = [])
+    {
+        return LazyCollection::make(function() use($requestUri, $bindings) {
+
+            $nextPage = $requestUri;
+
+            while (!is_null($nextPage)) {
+                list($data, $nextPage) = $this->getNextPage($nextPage, $bindings);
+
+                if (!is_null($nextPage)) {
+                    $nextPage = str_replace($this->baseUrl, '', $nextPage);
+                }
+
+                yield from $data;
+            }
+        });
+    }
+
+
+
+    /**
      * Run a POST request against the service.
      *
      * @param string $requestUri
@@ -332,6 +389,48 @@ class ODataV4Client implements IODataClient
     }
 
     /**
+     * Set the odata.maxpagesize value of the request.
+     *
+     * @param int $pageSize
+     *
+     * @return IODataClient
+     */
+    public function setPageSize($pageSize) {
+        $this->pageSize = $pageSize;
+        return $this;
+    }
+
+    /**
+     * Gets the page size
+     *
+     * @return int
+     */
+    public function getPageSize() {
+        return $this->pageSize;
+    }
+
+    /**
+     * Set the entityKey to be found.
+     *
+     * @param mixed $entityKey
+     *
+     * @return IODataClient
+     */
+    public function setEntityKey($entityKey) {
+        $this->entityKey = $entityKey;
+        return $this;
+    }
+
+    /**
+     * Gets the entity key
+     *
+     * @return mixed
+     */
+    public function getEntityKey() {
+        return $this->entityKey;
+    }
+
+    /**
      * Sets If-Match header on HttpProvider.
      *
      * @param string $value
@@ -387,11 +486,12 @@ class ODataV4Client implements IODataClient
      */
     protected static function formatHeaders(array $headers): array
     {
-        foreach ($headers[0] as $key => $value) {
-            $headers[$key] = $value;
-        }
-        unset($headers[0]);
+        $newHeaders = [];
 
-        return $headers;
+        foreach ($headers as $key => $value) {
+            $newHeaders[$key] = $value;
+        }
+
+        return $newHeaders;
     }
 }

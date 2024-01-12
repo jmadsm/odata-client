@@ -25,7 +25,7 @@ Example ```composer.json```
 
 Once this repository has been added, you can install this package by running the following command:
 ```sh
-composer require saintsystems/odata-client:dev-jma
+composer require saintsystems/odata-client:dev-<version>
 ```
 
 #### Constructing client

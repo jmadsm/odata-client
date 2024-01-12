@@ -113,13 +113,13 @@ class BuilderTest extends TestCase
 
         $entitySet = 'People';
 
-        //$expected = 55;
+        $expected = 20;
 
         $actual = $builder->from($entitySet)->count();
 
         $this->assertTrue(is_numeric($actual));
         $this->assertTrue($actual > 0);
-        //$this->assertEquals($expected, $actual);
+        $this->assertEquals($expected, $actual);
     }
 
     // public function testEntitySetCountWithWhere()
@@ -482,6 +482,37 @@ class BuilderTest extends TestCase
         $this->assertEquals($expectedUri, $actualUri);
     }
 
+    public function testEntityWithWhereColumn()
+    {
+        $builder = $this->getBuilder();
+
+        $entitySet = 'People';
+
+        $builder->from($entitySet)
+                ->whereColumn('FirstName', 'LastName');
+
+        $expectedUri = 'People?$filter=FirstName eq LastName';
+        $actualUri = $builder->toRequest();
+
+        $this->assertEquals($expectedUri, $actualUri);
+    }
+
+    public function testEntityWithOrWhereColumnO()
+    {
+        $builder = $this->getBuilder();
+
+        $entitySet = 'People';
+
+        $builder->from($entitySet)
+                ->where('FirstName', '=', 'Russell')
+                ->orWhereColumn('FirstName', 'LastName');
+
+        $expectedUri = 'People?$filter=FirstName eq \'Russell\' or FirstName eq LastName';
+        $actualUri = $builder->toRequest();
+
+        $this->assertEquals($expectedUri, $actualUri);
+    }
+
     public function testEntityWithWhereNull()
     {
         $builder = $this->getBuilder();
@@ -507,6 +538,36 @@ class BuilderTest extends TestCase
                 ->whereNotNull('FirstName');
 
         $expectedUri = 'People?$filter=FirstName ne null';
+        $actualUri = $builder->toRequest();
+
+        $this->assertEquals($expectedUri, $actualUri);
+    }
+
+    public function testEntityWithWhereIn()
+    {
+        $builder = $this->getBuilder();
+
+        $entitySet = 'People';
+
+        $builder->from($entitySet)
+                ->whereIn('FirstName', ['John', 'Jane']);
+
+        $expectedUri = 'People?$filter=FirstName in (\'John\',\'Jane\')';
+        $actualUri = $builder->toRequest();
+
+        $this->assertEquals($expectedUri, $actualUri);
+    }
+
+    public function testEntityWithWhereNotIn()
+    {
+        $builder = $this->getBuilder();
+
+        $entitySet = 'People';
+
+        $builder->from($entitySet)
+                ->whereNotIn('FirstName', ['John', 'Jane']);
+
+        $expectedUri = 'People?$filter=not(FirstName in (\'John\',\'Jane\'))';
         $actualUri = $builder->toRequest();
 
         $this->assertEquals($expectedUri, $actualUri);

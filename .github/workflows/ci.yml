@@ -11,6 +11,13 @@ jobs:
         operating-system: [ubuntu-latest]
         php-versions: ['8.1', '8.2']
     steps:
+      - name: Set Environment Variables
+        run: |
+          echo "COMPANY_ID=${{ secrets.COMPANY_ID }}" >> $GITHUB_ENV
+          echo "TENANT_USERNAME=${{ secrets.TENANT_USERNAME }}" >> $GITHUB_ENV
+          echo "TENANT_PASSWORD=${{ secrets.TENANT_PASSWORD }}" >> $GITHUB_ENV
+          echo "TENANT_NAME=${{ vars.TENANT_NAME }}" >> $GITHUB_ENV
+          echo "TENANT_URL=${{ vars.TENANT_URL }}" >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - name: Install PHP

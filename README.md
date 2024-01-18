@@ -1,3 +1,5 @@
+![workflow](https://github.com/jmadsm/odata-client/actions/workflows/ci.yml/badge.svg)
+
 # Get started with the OData Client for PHP
 
 See the original repository here: https://github.com/saintsystems/odata-client-php

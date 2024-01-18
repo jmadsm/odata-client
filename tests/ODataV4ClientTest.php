@@ -5,7 +5,25 @@ use PHPUnit\Framework\TestCase;
 use SaintSystems\OData\ODataV4Client;
 
 require_once (__DIR__ . '/../vendor/autoload.php');
-require_once (__DIR__ . '/config.php');
+if (file_exists(__DIR__ . '/config.php')) {
+    require_once (__DIR__ . '/config.php');
+}
+else {
+    function getConfig($service): array
+    {
+        $gatewayConfig['services'] = [
+            'tenant' => [ // KHO data is needed for the test to run successfully!
+                'company_id'     => getenv('COMPANY_ID'),
+                'tenant_name'    => getenv('TENANT_NAME'),
+                'tenant_url'     => getenv('TENANT_URL'),
+                'tenant_username' => getenv('TENANT_USERNAME'),
+                'tenant_password' => getenv('TENANT_PASSWORD')
+            ]
+        ];
+        return $gatewayConfig['services'][$service];
+    }
+}
+
 /**
  * Summary of ODataV4ClientTest
  */
